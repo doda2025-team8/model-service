@@ -108,7 +108,11 @@ jobs:
           
           # Verify the model can be loaded
           python -c "
+          import sys
+          sys.path.insert(0, 'src') 
+          from text_preprocessing import _text_process  
           import joblib
+
           print('Testing model loading...')
           model = joblib.load('output/model.joblib')
           print('✓ Model loaded successfully')
