@@ -58,7 +58,7 @@ jobs:
       
       - name: Preprocess data
         run: |
-          echo ""
+          echo "" 
           echo "=========================================="
           echo "Step 2/4: Preprocessing text data"
           echo "=========================================="
