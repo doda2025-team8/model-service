@@ -110,7 +110,7 @@ jobs:
           python -c "
           import sys
           sys.path.insert(0, 'src') 
-          from text_preprocessing import _text_process  
+          from text_preprocessing import _text_process, _extract_message_len
           import joblib
 
           print('Testing model loading...')
