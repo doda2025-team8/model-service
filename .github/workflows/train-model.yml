@@ -46,7 +46,7 @@ jobs:
           echo "=========================================="
           echo "Step 1/4: Downloading SMS dataset"
           echo "=========================================="
-          python get_data.py
+          python src/get_data.py
           
           echo ""
           echo "Verifying downloaded data..."
@@ -60,11 +60,11 @@ jobs:
       
       - name: Preprocess data
         run: |
-          echo ""
+          echo "" 
           echo "=========================================="
           echo "Step 2/4: Preprocessing text data"
           echo "=========================================="
-          python text_preprocessing.py
+          python src/text_preprocessing.py
           
           echo ""
           echo "Verifying preprocessor..."
@@ -82,7 +82,7 @@ jobs:
           echo "=========================================="
           echo "Step 3/4: Training classifier"
           echo "=========================================="
-          python text_classification.py
+          python src/text_classification.py
           
           echo ""
           echo "Verifying trained model..."
@@ -110,7 +110,11 @@ jobs:
           
           # Verify the model can be loaded
           python -c "
+          import sys
+          sys.path.insert(0, 'src') 
+          from text_preprocessing import _text_process, _extract_message_len
           import joblib
+
           print('Testing model loading...')
           model = joblib.load('output/model.joblib')
           print('✓ Model loaded successfully')

@@ -1,64 +1,183 @@
-# SMS Checker / Backend
+# Model Service - SMS Spam Classifier
 
-The backend of this project provides a simple REST service that can be used to detect spam messages.
-We have extended the base project [rohan8594/SMS-Spam-Detection](https://github.com/rohan8594/SMS-Spam-Detection), which introduces several basic classification models, and wrap one of them in a microservice.
+A containerized microservice for SMS spam detection using machine learning.
 
-The following sections will explain you how to get started.
-The project **requires a Python 3.12 environment** to run (tested with 3.12.9).
-Use the `requirements.txt` file to restore the required dependencies in your environment.
+**Team:** doda2025-team8  
+**Repository:** https://github.com/doda2025-team8/model-service
 
+## 🏗️ Architecture
 
-### Training the Model
+- **Runtime**: Python 3.12.9
+- **Framework**: Flask + Swagger UI
+- **ML Stack**: scikit-learn, NLTK, Decision Tree
+- **Container**: Docker (multi-arch: amd64, arm64)
 
-To train the model, you have two options.
-Either you create a local environment...
+**Model Loading:** Models are NOT baked into the Docker image. They download at runtime from GitHub Releases or can be mounted via volume. This allows model updates without rebuilding containers.
 
-    $ python -m venv venv
-    $ source venv/bin/activate
-    $ pip install -r requirements.txt
+## 🚀 Quick Start
 
-... or you train in a Docker container (recommended):
+### Pull and Run
 
-    $ docker run -it --rm -v ./:/root/sms/ python:3.12.9-slim bash
-    ... (container startup)
-    $ cd /root/sms/
-    $ pip install -r requirements.txt
+**Windows PowerShell:**
+```powershell
+docker pull ghcr.io/doda2025-team8/model-service:latest
 
-Once all dependencies have been installed, the data can be preprocessed and the model trained by creating the output folder and invoking three commands:
+docker run -d -p 8081:8081 `
+  -e GITHUB_REPO=doda2025-team8/model-service `
+  --name model-service `
+  ghcr.io/doda2025-team8/model-service:latest
 
-    $ mkdir output
-    $ python src/read_data.py
-    Total number of messages:5574
-    ...
-    $ python src/text_preprocessing.py
-    [nltk_data] Downloading package stopwords to /root/nltk_data...
-    [nltk_data]   Unzipping corpora/stopwords.zip.
-    ...
-    $ python src/text_classification.py
+# Wait 30-60 seconds for model download, then test
+Invoke-RestMethod http://localhost:8081/health
+```
 
-The resulting model files will be placed as `.joblib` files in the `output/` folder.
+**Linux/Mac:**
+```bash
+docker pull ghcr.io/doda2025-team8/model-service:latest
 
+docker run -d -p 8081:8081 \
+  -e GITHUB_REPO=doda2025-team8/model-service \
+  --name model-service \
+  ghcr.io/doda2025-team8/model-service:latest
 
-### Serving Recommendations
+curl http://localhost:8081/health
+```
 
-To make the models accessible, you need to start the microservice by running the `src/serve_model.py` script from within the virtual environment that you created before, or in a fresh Docker container (recommended):
+### Faster Startup (with Volume Mount)
 
-    $ docker run -it --rm -p 8081:8081 -v ./:/root/sms/ python:3.12.9-slim bash
-    ... (container startup)
-    $ cd /root/sms/
-    $ pip install -r requirements.txt
-    $ python src/serve_model.py
+If you have models locally:
 
-The server will start on port 8081.
-Once its startup has finished, you can either access [localhost:8081/apidocs](http://localhost:8081/apidocs) in your browser to interact with the service, or you send `POST` requests to request predictions, for example with `curl`:
+```powershell
+# Windows
+docker run -d -p 8081:8081 -v ${PWD}/output:/app/models --name model-service ghcr.io/doda2025-team8/model-service:latest
 
+# Linux/Mac
+docker run -d -p 8081:8081 -v ./output:/app/models --name model-service ghcr.io/doda2025-team8/model-service:latest
+```
 
-    $ curl -X POST "http://localhost:8081/predict" -H "Content-Type: application/json" -d '{"sms": "test ..."}'
-    {
-      "classifier": "decision tree",
-      "result": "ham",
-      "sms": "test ..."
-    }
+### Persistent Cache
 
+```powershell
+docker volume create model-cache
+docker run -d -p 8081:8081 -v model-cache:/app/models -e GITHUB_REPO=doda2025-team8/model-service --name model-service ghcr.io/doda2025-team8/model-service:latest
+```
 
+## 📡 API Usage
 
+### Health Check
+```powershell
+# Windows
+Invoke-RestMethod http://localhost:8081/health
+
+# Linux/Mac
+curl http://localhost:8081/health
+```
+
+### Predict Spam
+
+**Windows:**
+```powershell
+$body = @{ sms = "WIN FREE PRIZE NOW!" } | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:8081/predict -Method POST -ContentType "application/json" -Body $body
+```
+
+**Linux/Mac:**
+```bash
+curl -X POST http://localhost:8081/predict \
+  -H "Content-Type: application/json" \
+  -d '{"sms": "WIN FREE PRIZE NOW!"}'
+```
+
+**Response:**
+```json
+{
+  "result": "spam",
+  "classifier": "decision tree",
+  "confidence": 0.92,
+  "sms": "WIN FREE PRIZE NOW!"
+}
+```
+
+**API Docs:** http://localhost:8081/apidocs
+
+## ⚙️ Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MODEL_SERVICE_PORT` | `8081` | Service port |
+| `MODEL_DIR` | `/app/models` | Model directory |
+| `MODEL_VERSION` | `latest` | Model version from releases |
+| `GITHUB_REPO` | `doda2025-team8/model-service` | GitHub repo for downloads |
+
+**Examples:**
+
+```powershell
+# Custom port
+docker run -d -p 9000:9000 -e MODEL_SERVICE_PORT=9000 -e GITHUB_REPO=doda2025-team8/model-service --name model-service ghcr.io/doda2025-team8/model-service:latest
+
+# Specific version
+docker run -d -p 8081:8081 -e MODEL_VERSION=v1.0.0 -e GITHUB_REPO=doda2025-team8/model-service --name model-service ghcr.io/doda2025-team8/model-service:latest
+```
+
+## 🏋️ Training Models
+
+Models are trained via GitHub Actions:
+
+1. Go to: https://github.com/doda2025-team8/model-service/actions
+2. Run **"Train and Release Model"** workflow
+3. Enter version (e.g., `v1.0.0`) and release notes
+4. Workflow trains and creates GitHub release with model files
+5. Use new model: `docker run -e MODEL_VERSION=v1.0.0 ...`
+
+**Releases:** https://github.com/doda2025-team8/model-service/releases
+
+## 🐳 Local Development
+
+```powershell
+# Build
+docker build -t model-service:local .
+
+# Run with local models
+docker run -d -p 8081:8081 -v ${PWD}/output:/app/models --name test model-service:local
+
+# Test
+Invoke-RestMethod http://localhost:8081/health
+
+# Cleanup
+docker stop test && docker rm test
+```
+
+## 🛑 Container Management
+
+```powershell
+# View logs
+docker logs -f model-service
+
+# Stop
+docker stop model-service
+
+# Remove
+docker rm model-service
+
+# Stop and remove
+docker rm -f model-service
+```
+
+## 🔍 Troubleshooting
+
+**Container won't start:**
+```powershell
+docker logs model-service  # Check for errors
+```
+
+**Models not loading:**
+```powershell
+docker exec model-service ls -lh /app/models/  # Verify models exist
+```
+
+**Force model re-download:**
+```powershell
+docker rm -f model-service
+docker volume rm model-cache  # If using cache
+# Run container again
+```

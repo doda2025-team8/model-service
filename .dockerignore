@@ -1,0 +1,83 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+env/
+.venv/
+
+# Output and model files (will be mounted as volumes)
+output/
+*.joblib
+models/
+
+# Training data (not needed in production image)
+smsspamcollection/
+data/
+*.csv
+*.tsv
+spam.xml
+
+# Allow requirements.txt but exclude other txt files from data directories
+!requirements.txt
+smsspamcollection/*.txt
+data/*.txt
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+test_*.py
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Training scripts (not needed for serving)
+get_data.py
+read_data.py
+text_preprocessing.py
+text_classification.py
+learning_curve.py
+parameter_tuning.py
+address_imbalance.py
+check_bias.py
+
+# Build scripts
+build*.sh
+test*.sh
+
+# Logs
+*.log
+logs/

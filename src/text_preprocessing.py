@@ -4,6 +4,7 @@ Preprocess the data to be trained by the learning algorithm.
 
 import pandas as pd
 import numpy as np
+import os
 
 import string
 import nltk
@@ -57,6 +58,9 @@ def _preprocess(messages):
     2. Convert bag of words representation into tfidf vectorized representation for each message
     3. Add message length
     '''
+    # Create output directory if it doesn't exist
+    os.makedirs('output', exist_ok=True)
+    
     preprocessor = make_union(
         make_pipeline(
             CountVectorizer(analyzer=_text_process),
