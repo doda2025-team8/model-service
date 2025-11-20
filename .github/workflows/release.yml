@@ -2,25 +2,44 @@ name: Release Model Serivce
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: ["main"]  
 jobs:
   release:
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
-      - name: Parse version info from VERSION file
+      - name: Checkout
         uses: actions/checkout@v4
-      - run: |
-          VERSION=$(cat VERSION)
-          VERSION=${VERSION#v}
-          MAJOR=$(echo "$VERSION" | cut -d . -f 1)
-          MINOR=$(echo "$VERSION" | cut -d . -f 2)
-          PATCH=$(echo "$VERSION" | cut -d . -f 3)
-          echo "version=$VERSION" >> $GITHUB_ENV
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+
+
+      - name: Parse version info from VERSION file
+        id: extract_version
+        run: |
+          FULL_VERSION=$(cat VERSION) 
+          FULL_VERSION=${FULL_VERSION#v} #remove leading 'v'
+          
+          VERSION_BASE=$(echo $FULL_VERSION | cut -d - -f 1) #remove '-SNAPSHOT'
+          
+          MAJOR=$(echo "$VERSION_BASE" | cut -d . -f 1)
+          MINOR=$(echo "$VERSION_BASE" | cut -d . -f 2)
+          PATCH=$(echo "$VERSION_BASE" | cut -d . -f 3)
+          
+          echo "Full Version: $FULL_VERSION"
+          echo "Base Version: $VERSION_BASE"
+          
+          echo "VERSION_BASE=$VERSION_BASE" >> $GITHUB_ENV
           echo "version_major=$MAJOR" >> $GITHUB_ENV
           echo "version_minor=$MINOR" >> $GITHUB_ENV
           echo "version_patch=$PATCH" >> $GITHUB_ENV
+
+      - name: Set stable version for build
+        run: |
+          echo "${{ env.VERSION_BASE }}" > VERSION  #set stable version for build
 
       - name: Docker metadata
         id: meta
@@ -28,7 +47,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=${{ env.version }}
+            type=raw,value=${{ env.VERSION_BASE }}
             type=raw,value=${{ env.version_major }}.${{ env.version_minor }}.latest
             type=raw,value=${{ env.version_major }}.latest
             type=raw,value=latest
@@ -54,3 +73,20 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Bump version to next snapshot
+        run: |
+          NEW_PATCH=$(( ${{ env.version_patch }} + 1 ))
+          NEXT_VERSION="${{ env.version_major }}.${{ env.version_minor }}.${NEW_PATCH}-SNAPSHOT"
+          
+          echo "Bumping from ${{ env.VERSION_BASE }} to $NEXT_VERSION"
+          
+          echo "$NEXT_VERSION" > VERSION
+          
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          
+          git add VERSION
+          git commit -m "chore(release): Bump version to $NEXT_VERSION after stable release [skip ci]."
+
+          git push origin HEAD:main
