@@ -2,15 +2,21 @@
 Flask API of the SMS Spam detection model model.
 """
 import os
-from flask import Flask, jsonify, request
+import time
+from flask import Flask, jsonify, request, Response
 from flasgger import Swagger
 from model_loader import model_loader
 
 # IMPORTANT: Import preprocessing functions so joblib can find them when unpickling
 from text_preprocessing import _text_process, _extract_message_len
 
+from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
+
 # Read port from environment variable, default to 8081
 PORT = int(os.getenv('MODEL_SERVICE_PORT', '8081'))
+
+# Get the version of the model
+MODEL_VERSION = os.getenv('MODEL_VERSION', 'v1')
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -29,6 +35,10 @@ classifier = models['model']
 print(f"\n{'='*60}")
 print(f"🚀 Model Service Ready on port {PORT}")
 print(f"{'='*60}\n")
+
+# Prometheus metrics
+predictions_total = Counter('model_predictions_total', 'Total predictions', ['version', 'result'])
+prediction_latency_seconds = Histogram('model_prediction_latency_seconds', 'Prediction latency', ['version'])
 
 
 @app.route('/health', methods=['GET'])
@@ -70,6 +80,8 @@ def predict():
       200:
         description: "The result of the classification: 'spam' or 'ham'."
     """
+    start_time = time.time()
+
     try:
         input_data = request.get_json()
         
@@ -90,6 +102,9 @@ def predict():
         if hasattr(classifier, 'predict_proba'):
             probabilities = classifier.predict_proba(processed_sms)[0]
             confidence = float(max(probabilities))
+
+        predictions_total.labels(version=MODEL_VERSION, result=prediction).inc()
+        model_prediction_latency_seconds.labels(version=MODEL_VERSION).observe(time.time() - start_time)
         
         res = {
             "result": prediction,
@@ -124,6 +139,11 @@ def root():
             'docs': '/apidocs'
         }
     }), 200
+
+# Endpoint for exposing prometheus metrics
+@app.route('/metrics')
+def metrics():
+    return Response(generate_latest(REGISTRY), mimetype='text/plain')
 
 
 if __name__ == '__main__':
