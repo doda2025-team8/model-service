@@ -104,7 +104,7 @@ def predict():
             confidence = float(max(probabilities))
 
         predictions_total.labels(version=MODEL_VERSION, result=prediction).inc()
-        model_prediction_latency_seconds.labels(version=MODEL_VERSION).observe(time.time() - start_time)
+        prediction_latency_seconds.labels(version=MODEL_VERSION).observe(time.time() - start_time)
         
         res = {
             "result": prediction,
