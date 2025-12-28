@@ -58,3 +58,6 @@ Run the **Train and Release Model** workflow in [GitHub Actions](https://github.
 docker build -t model-service:local .
 docker run -d -p 8081:8081 -v ./output:/app/models --name test model-service:local
 ```
+
+## Enviroment
+Currently no environment file needed
