@@ -14,7 +14,7 @@ Models download at runtime from GitHub Releases (not baked into the image), so y
 docker pull ghcr.io/doda2025-team8/model-service:latest
 
 docker run -d -p 8081:8081 \
-  -e GITHUB_REPO=doda2025-team8/model-service \
+  --env-file .env \
   --name model-service \
   ghcr.io/doda2025-team8/model-service:latest
 ```
@@ -43,10 +43,27 @@ Full docs at `/apidocs`
 
 ## Config
 
-MODEL_SERVICE_PORT: 8081 
-MODEL_DIR: /app/models
-MODEL_VERSION: latest
-GITHUB_REPO: doda2025-team8/model-service 
+Copy `.env` and adjust values as needed:
+
+```
+MODEL_SERVICE_PORT=8081
+MODEL_DIR=/app/models
+MODEL_VERSION=latest
+GITHUB_REPO=doda2025-team8/model-service
+NLTK_DATA=/usr/share/nltk_data
+```
+
+Then use `--env-file .env` when running the container (see Running section above).
+
+You can also override individual variables with `-e`:
+
+```bash
+# Different port
+docker run -d -p 9000:9000 -e MODEL_SERVICE_PORT=9000 ghcr.io/doda2025-team8/model-service:latest
+
+# Specific model version
+docker run -d -p 8081:8081 -e MODEL_VERSION=v1.0.0 ghcr.io/doda2025-team8/model-service:latest
+```
 
 ## Training
 
@@ -59,5 +76,6 @@ docker build -t model-service:local .
 docker run -d -p 8081:8081 -v ./output:/app/models --name test model-service:local
 ```
 
-## Enviroment
-Currently no environment file needed
+## Notes
+
+Use the included `.env` file to configure the service. First startup takes ~30 seconds for model download.
