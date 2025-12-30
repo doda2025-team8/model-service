@@ -43,7 +43,11 @@ Full docs at `/apidocs`
 
 ## Config
 
-Copy `.env` and adjust values as needed:
+Copy `.env.example` to `.env` and adjust values as needed:
+
+```bash
+cp .env.example .env
+```
 
 ```
 MODEL_SERVICE_PORT=8081
@@ -78,4 +82,4 @@ docker run -d -p 8081:8081 -v ./output:/app/models --name test model-service:loc
 
 ## Notes
 
-Use the included `.env` file to configure the service. First startup takes ~30 seconds for model download.
+Copy `.env.example` to `.env` to configure the service. First startup takes ~30 seconds for model download.
