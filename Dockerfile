@@ -1,18 +1,12 @@
-#Dockerfile
-# ============================================
 # Stage 1: Builder
-# ============================================
 FROM python:3.12.9-slim AS builder
 
 WORKDIR /build
 
-# Copy requirements and install to a temporary location
 COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# ============================================
 # Stage 2: Runtime
-# ============================================
 FROM python:3.12.9-slim AS runtime
 
 WORKDIR /app

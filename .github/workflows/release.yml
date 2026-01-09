@@ -1,9 +1,7 @@
 name: Release Model Serivce
 on:
   push:
-    branches: ["main"]
-  # pull_request:
-  #   branches: ["main"]  
+    branches: ["main"] 
 jobs:
   release:
     runs-on: ubuntu-24.04

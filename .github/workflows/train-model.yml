@@ -1,7 +1,7 @@
 name: Train and Release Model
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
     inputs:
       version:
         description: 'Model version (e.g., v1.0.0)'
