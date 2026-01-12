@@ -1,9 +1,7 @@
 name: Release Model Serivce
 on:
   push:
-    branches: 
-      - "main"
-      - "feature/fix_auto_version_release"
+    branches: ["main"]
 jobs:
   release:
     runs-on: ubuntu-24.04
