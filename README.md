@@ -52,7 +52,7 @@ cp .env.example .env
 ```
 MODEL_SERVICE_PORT=8081
 MODEL_DIR=/app/models
-MODEL_VERSION=latest
+MODEL_VERSION=v1.0.2
 GITHUB_REPO=doda2025-team8/model-service
 NLTK_DATA=/usr/share/nltk_data
 ```
