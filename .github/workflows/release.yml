@@ -13,6 +13,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+
 
       - name: Parse version info from VERSION file
         id: extract_version
@@ -39,7 +41,7 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
 
-          echo "{{ env.VERSION_BASE }}" > VERSION
+          echo "${{ env.VERSION_BASE }}" > VERSION
           git add VERSION
           git commit -m "chore(release): Release version ${{ env.VERSION_BASE }} [skip ci]."
 
