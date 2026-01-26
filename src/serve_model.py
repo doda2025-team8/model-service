@@ -16,7 +16,7 @@ from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
 PORT = int(os.getenv('MODEL_SERVICE_PORT', '8081'))
 
 # Get the version of the model
-MODEL_VERSION = os.getenv('MODEL_VERSION', 'v1')
+MODEL_VERSION = os.getenv('MODEL_VERSION', 'latest')
 
 # Initialize Flask app
 app = Flask(__name__)
